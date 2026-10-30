@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { parseTags, useData } from './store.jsx';
 import { submitOnMetaEnter } from './ui.jsx';
 
@@ -43,6 +43,13 @@ export default function QuoteForm({ sourceType, initial, onSubmit, onCancel, sub
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const textareaRef = useRef(null);
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    textareaRef.current.style.height = 'auto';
+    textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+  }, [text]);
+
   const run = async (handler) => {
     if (!text.trim()) { setError('Paste or type the quote first.'); return; }
     setBusy(true); setError('');
@@ -58,7 +65,7 @@ export default function QuoteForm({ sourceType, initial, onSubmit, onCancel, sub
 
   return (
     <form className="quote-form" onSubmit={(e) => { e.preventDefault(); run(onSubmit); }}>
-      <textarea className="quote-input" rows={4} value={text} onChange={(e) => setText(e.target.value)}
+      <textarea ref={textareaRef} className="quote-input" style={{ overflow: 'hidden' }} value={text} onChange={(e) => setText(e.target.value)}
         onKeyDown={keys} placeholder="Paste the passage" />
       <div className="quote-form-row">
         <label className="field field-short">
