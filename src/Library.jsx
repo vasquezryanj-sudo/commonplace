@@ -96,12 +96,8 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
                 {shelf.map((s) => (
                   <li key={s.id}>
                     <a href={`#/s/${s.id}`} className={`spine spine-${s.type}`}>
-                      <span className="spine-type">{TYPE_LABEL[s.type]}</span>
                       <span className="spine-title">{s.title}</span>
                       <span className="spine-by">{byline(s) || s.details?.publication || s.details?.podcast || ''}</span>
-                      <span className="spine-count">
-                        {counts[s.id]?.q || 0} {counts[s.id]?.q === 1 ? 'quote' : 'quotes'}, {counts[s.id]?.n || 0} {counts[s.id]?.n === 1 ? 'note' : 'notes'}
-                      </span>
                     </a>
                   </li>
                 ))}

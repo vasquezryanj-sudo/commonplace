@@ -33,8 +33,19 @@ create table if not exists public.notes (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.terms (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  source_id uuid not null references public.sources (id) on delete cascade,
+  term text not null,
+  definition text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists quotes_source_idx on public.quotes (source_id);
 create index if not exists notes_source_idx on public.notes (source_id);
+create index if not exists terms_source_idx on public.terms (source_id);
 create index if not exists quotes_tags_idx on public.quotes using gin (tags);
 
 -- Keep updated_at current on edits
@@ -47,11 +58,14 @@ drop trigger if exists quotes_touch on public.quotes;
 create trigger quotes_touch before update on public.quotes for each row execute function public.touch_updated_at();
 drop trigger if exists notes_touch on public.notes;
 create trigger notes_touch before update on public.notes for each row execute function public.touch_updated_at();
+drop trigger if exists terms_touch on public.terms;
+create trigger terms_touch before update on public.terms for each row execute function public.touch_updated_at();
 
 -- Only the signed-in owner can see or change their rows
 alter table public.sources enable row level security;
 alter table public.quotes enable row level security;
 alter table public.notes enable row level security;
+alter table public.terms enable row level security;
 
 drop policy if exists "own sources" on public.sources;
 create policy "own sources" on public.sources for all to authenticated
@@ -61,4 +75,7 @@ create policy "own quotes" on public.quotes for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 drop policy if exists "own notes" on public.notes;
 create policy "own notes" on public.notes for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "own terms" on public.terms;
+create policy "own terms" on public.terms for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
