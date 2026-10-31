@@ -10,6 +10,7 @@ export function DataProvider({ children, onError }) {
   const [sources, setSources] = useState([]);
   const [quotes, setQuotes] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [terms, setTerms] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fail = useCallback((error) => {
@@ -18,16 +19,18 @@ export function DataProvider({ children, onError }) {
 
   useEffect(() => {
     (async () => {
-      const [s, q, n] = await Promise.all([
+      const [s, q, n, tm] = await Promise.all([
         supabase.from('sources').select('*'),
         supabase.from('quotes').select('*'),
         supabase.from('notes').select('*'),
+        supabase.from('terms').select('*'),
       ]);
       const err = s.error || q.error || n.error;
       if (err) onError?.(`Couldn't load your library: ${err.message}`);
       setSources(s.data || []);
       setQuotes((q.data || []).sort(byNewest));
       setNotes((n.data || []).sort(byNewest));
+      setTerms((tm.data || []).sort(byNewest));
       setLoading(false);
     })();
   }, [onError]);
@@ -59,6 +62,7 @@ export function DataProvider({ children, onError }) {
       setSources((l) => l.filter((s) => s.id !== id));
       setQuotes((l) => l.filter((q) => q.source_id !== id));
       setNotes((l) => l.filter((n) => n.source_id !== id));
+      setTerms((l) => l.filter((t) => t.source_id !== id));
     },
     async saveQuote(fields, id) {
       const row = { source_id: fields.source_id, text: fields.text.trim(), locator: fields.locator.trim(), tags: fields.tags };
@@ -92,6 +96,22 @@ export function DataProvider({ children, onError }) {
       fail(error);
       setNotes((l) => l.filter((n) => n.id !== id));
     },
+    async saveTerm(fields, id) {
+      const row = { source_id: fields.source_id, term: fields.term.trim(), definition: fields.definition.trim() };
+      const query = id
+        ? supabase.from('terms').update(row).eq('id', id)
+        : supabase.from('terms').insert(row);
+      const { data, error } = await query.select().single();
+      fail(error);
+      setTerms((l) => (id ? l.map((t) => (t.id === id ? data : t)) : [data, ...l]));
+      touch(row.source_id);
+      return data;
+    },
+    async deleteTerm(id) {
+      const { error } = await supabase.from('terms').delete().eq('id', id);
+      fail(error);
+      setTerms((l) => l.filter((t) => t.id !== id));
+    },
   }), [fail]);
 
   const allTags = useMemo(() => {
@@ -100,7 +120,7 @@ export function DataProvider({ children, onError }) {
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [quotes]);
 
-  const value = { sources, quotes, notes, loading, allTags, ...api };
+  const value = { sources, quotes, notes, terms, loading, allTags, ...api };
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
