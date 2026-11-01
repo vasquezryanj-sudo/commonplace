@@ -279,6 +279,7 @@ export default function SourceView({ id, focusQuoteId, onExport }) {
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addingTerm, setAddingTerm] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [tagFilter, setTagFilter] = useState([]);
   const [termSearch, setTermSearch] = useState('');
 
@@ -313,7 +314,16 @@ export default function SourceView({ id, focusQuoteId, onExport }) {
         </div>
         <div className="source-actions">
           <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>Edit source</button>
-          <button type="button" className="btn-ghost" onClick={() => onExport({ source, quotes: myQuotes, notes: myNotes, terms: myTerms })}>Export PDF</button>
+          <div className="export-menu">
+            <button type="button" className="btn-ghost" onClick={() => setExportOpen((o) => !o)}>Export PDF</button>
+            {exportOpen && (
+              <div className="export-popout">
+                <button type="button" onClick={() => { onExport({ source, quotes: myQuotes, notes: myNotes, terms: myTerms, mode: 'full' }); setExportOpen(false); }}>Notes &amp; Quotes</button>
+                <button type="button" onClick={() => { onExport({ source, quotes: myQuotes, notes: myNotes, terms: myTerms, mode: 'notes' }); setExportOpen(false); }}>Notes only</button>
+                <button type="button" onClick={() => { onExport({ source, quotes: myQuotes, notes: myNotes, terms: myTerms, mode: 'quotes' }); setExportOpen(false); }}>Quotes only</button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

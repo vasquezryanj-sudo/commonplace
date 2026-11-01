@@ -7,14 +7,18 @@ export default function PrintView({ job }) {
   if (!job) return null;
 
   if (job.source) {
-    const { source, quotes, notes, terms = [] } = job;
+    const { source, quotes: allQuotes, notes: allNotes, terms = [], mode = 'full' } = job;
+    const quotes = mode === 'notes' ? [] : allQuotes;
+    const notes = mode === 'quotes' ? [] : allNotes;
+    const showTerms = mode !== 'quotes';
     const c = citations(source);
+    const modeLabel = mode === 'notes' ? ' — Notes' : mode === 'quotes' ? ' — Quotes' : '';
     return (
       <article className="print">
-        <h1>{source.title}</h1>
+        <h1>{source.title}{modeLabel}</h1>
         <p className="print-bib"><Rich segs={c.bib} /></p>
-        {terms.length > 0 && <h2>Terms</h2>}
-        {terms.map((t) => (
+        {showTerms && terms.length > 0 && <h2>Terms</h2>}
+        {showTerms && terms.map((t) => (
           <section key={t.id} className="print-term">
             <p className="print-term-name">{t.term}</p>
             <p className="print-term-def">{t.definition}</p>

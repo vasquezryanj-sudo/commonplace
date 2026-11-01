@@ -186,7 +186,16 @@ textarea { resize: vertical; line-height: 1.5; }
   display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px;
   max-width: 1180px; margin: 0 auto; padding: 32px;
 }
-.tag-rail h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 6px 0 10px; }
+.tag-rail-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
+.tag-rail h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0; }
+.tag-mode-toggle { display: flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.tag-mode-toggle button {
+  border: none; background: transparent; padding: 2px 7px;
+  font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; line-height: 1.6;
+}
+.tag-mode-toggle button:hover { background: rgba(30,37,51,.06); color: var(--ink); }
+.tag-mode-toggle button.on { background: var(--cloth); color: #fff; }
+.tag-mode-toggle button + button { border-left: 1px solid var(--rule); }
 .tag-rail ul { list-style: none; margin: 0; padding: 0; position: sticky; top: 90px; max-height: calc(100vh - 120px); overflow-y: auto; }
 .tag-rail button {
   width: 100%; display: flex; justify-content: space-between;
@@ -199,22 +208,71 @@ textarea { resize: vertical; line-height: 1.5; }
 .tag-rail button.on .count { color: rgba(255,255,255,.75); }
 
 .shelf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.spines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.spines {
+  list-style: none; margin: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 4px;
+}
 
-/* Each source is a book spine lying on the desk */
+/* Each source is a book spine — compact catalog cards */
+.spine-row { position: relative; display: flex; align-items: stretch; }
 .spine {
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 9px 16px 9px 14px;
+  display: flex; flex-direction: column; gap: 1px;
+  flex: 1; min-width: 0;
+  padding: 6px 36px 6px 10px;
   background: var(--sheet); border-radius: 3px var(--radius) var(--radius) 3px;
   text-decoration: none;
-  border-left: 4px solid var(--cloth);
+  border-left: 3px solid var(--cloth);
   box-shadow: 0 1px 0 rgba(30,37,51,.06);
 }
-.spine:hover { box-shadow: 0 2px 8px rgba(30,37,51,.1); }
+.spine:hover { box-shadow: 0 2px 6px rgba(30,37,51,.1); }
 .spine-article { border-left-color: var(--article); }
 .spine-podcast { border-left-color: var(--podcast); }
-.spine-title { font: 500 15px/1.3 var(--serif); color: var(--ink); }
-.spine-by { font-size: 12px; color: var(--muted); }
+.spine-title { font: 500 13px/1.25 var(--serif); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spine-by { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Per-spine export button */
+.spine-export { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; }
+.spine-export-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 100%;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 12px; opacity: 0;
+  transition: opacity .15s;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.spine-row:hover .spine-export-btn { opacity: 1; }
+.spine-export-btn:hover { background: rgba(30,37,51,.06); color: var(--ink); }
+.spine-export-menu {
+  position: absolute; right: 0; top: calc(100% + 2px); z-index: 40;
+  background: var(--sheet); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: 0 4px 12px rgba(30,37,51,.12);
+  min-width: 140px; padding: 4px;
+  display: flex; flex-direction: column;
+}
+.spine-export-menu button {
+  background: none; border: none; cursor: pointer;
+  text-align: left; padding: 6px 10px; border-radius: 3px;
+  font-size: 13px; color: var(--ink); white-space: nowrap;
+}
+.spine-export-menu button:hover { background: rgba(30,37,51,.06); }
+
+/* SourceView export dropdown */
+.export-menu { position: relative; }
+.export-popout {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 40;
+  background: var(--sheet); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: 0 4px 12px rgba(30,37,51,.12);
+  min-width: 148px; padding: 4px;
+  display: flex; flex-direction: column;
+}
+.export-popout button {
+  background: none; border: none; cursor: pointer;
+  text-align: left; padding: 7px 12px; border-radius: 3px;
+  font-size: 14px; color: var(--ink); white-space: nowrap;
+}
+.export-popout button:hover { background: rgba(30,37,51,.06); }
 
 .empty { padding: 48px 0; color: var(--muted); max-width: 46ch; }
 .empty p { font: 17px/1.6 var(--serif); }
@@ -227,14 +285,26 @@ textarea { resize: vertical; line-height: 1.5; }
 .result-sources li { padding: 4px 0; }
 .result-sources a { font: 17px var(--serif); }
 .result-quote, .result-note {
-  display: block; text-decoration: none;
   background: var(--sheet); border-radius: var(--radius);
-  padding: 16px 20px; margin-bottom: 8px;
+  margin-bottom: 8px; overflow: hidden;
 }
 .result-quote:hover, .result-note:hover { box-shadow: 0 2px 10px rgba(30,37,51,.12); }
+.result-quote-body {
+  display: block; text-decoration: none;
+  padding: 16px 20px 12px;
+}
+.result-note {
+  display: block; text-decoration: none;
+  padding: 16px 20px;
+}
 .result-quote blockquote { margin: 0 0 8px; font: 17px/1.65 var(--serif); }
 .result-note p { margin: 0 0 6px; font: 15px/1.6 var(--serif); white-space: pre-wrap; }
 .result-meta { color: var(--muted); font-size: 13px; margin-right: 10px; }
+.result-cite-actions {
+  display: flex; gap: 4px; padding: 0 14px 10px;
+  opacity: 0; transition: opacity .15s;
+}
+.result-quote:hover .result-cite-actions { opacity: 1; }
 mark.hit { background: none; text-decoration: underline 2px var(--article); text-underline-offset: 3px; color: inherit; }
 
 /* The one flourish: quotes are highlighted, as on the page you pulled them from */

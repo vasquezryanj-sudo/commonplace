@@ -1,18 +1,18 @@
-import React, { useMemo } from 'react';
-import { parseAuthors } from './citations.js';
+import React, { useMemo, useState } from 'react';
+import { citations, parseAuthors } from './citations.js';
 import { parseQuery, useData } from './store.jsx';
-import { TagChips, TYPE_LABEL } from './ui.jsx';
+import { CopyButton, TagChips, TYPE_LABEL } from './ui.jsx';
 
-const tagMatches = (quoteTags, wanted) => wanted.every((w) =>
-  quoteTags.some((t) => t === w || t.replace(/\s+/g, '-') === w));
-
-export function runSearch({ sources, quotes, notes }, query) {
+export function runSearch({ sources, quotes, notes }, query, tagMode = 'and') {
   const { tags, text } = parseQuery(query);
   const byId = Object.fromEntries(sources.map((s) => [s.id, s]));
   const has = (s) => !text || (s || '').toLowerCase().includes(text);
   const sourceText = (s) => [s.title, s.authors, s.details?.subtitle, s.details?.publication, s.details?.podcast].join(' ');
+  const tagMatch = (quoteTags) => !tags.length || (tagMode === 'or'
+    ? tags.some((w) => quoteTags.some((t) => t === w || t.replace(/\s+/g, '-') === w))
+    : tags.every((w) => quoteTags.some((t) => t === w || t.replace(/\s+/g, '-') === w)));
 
-  const q = quotes.filter((x) => byId[x.source_id] && (!tags.length || tagMatches(x.tags, tags)) && has(`${x.text} ${x.tags.join(' ')}`));
+  const q = quotes.filter((x) => byId[x.source_id] && tagMatch(x.tags) && has(`${x.text} ${x.tags.join(' ')}`));
   const n = tags.length ? [] : notes.filter((x) => byId[x.source_id] && has(x.body));
   const s = tags.length ? [] : sources.filter((x) => has(sourceText(x)));
   return { quotes: q, notes: n, sources: s, tags, text, byId };
@@ -36,7 +36,20 @@ const byline = (s) => parseAuthors(s.authors).map((a) => [a.first, a.last].filte
 
 export default function Library({ query, setQuery, filter, setFilter, onExport }) {
   const data = useData();
-  const { sources, quotes, notes, allTags, loading } = data;
+  const { sources, quotes, notes, terms, allTags, loading } = data;
+  const [openSpineMenu, setOpenSpineMenu] = useState(null);
+  const [tagMode, setTagMode] = useState('and');
+
+  const handleSpineExport = (source, mode) => {
+    onExport({
+      source,
+      quotes: quotes.filter((q) => q.source_id === source.id),
+      notes: notes.filter((n) => n.source_id === source.id),
+      terms: terms.filter((t) => t.source_id === source.id),
+      mode,
+    });
+    setOpenSpineMenu(null);
+  };
 
   const counts = useMemo(() => {
     const c = {};
@@ -45,7 +58,7 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
     return c;
   }, [quotes, notes]);
 
-  const results = useMemo(() => (query.trim() ? runSearch(data, query) : null), [data, query]);
+  const results = useMemo(() => (query.trim() ? runSearch(data, query, tagMode) : null), [data, query, tagMode]);
   const shelf = useMemo(() => sources
     .filter((s) => filter === 'all' || s.type === filter)
     .sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || '')), [sources, filter]);
@@ -59,7 +72,15 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
   return (
     <div className="library">
       <aside className="tag-rail">
-        <h2>Tags</h2>
+        <div className="tag-rail-head">
+          <h2>Tags</h2>
+          {allTags.length > 0 && (
+            <div className="tag-mode-toggle" role="group" aria-label="Tag filter mode">
+              <button type="button" className={tagMode === 'and' ? 'on' : ''} onClick={() => setTagMode('and')} title="Show quotes that have all selected tags">All</button>
+              <button type="button" className={tagMode === 'or' ? 'on' : ''} onClick={() => setTagMode('or')} title="Show quotes that have any selected tag">Any</button>
+            </div>
+          )}
+        </div>
         {allTags.length === 0 && <p className="hint">Tags you add to quotes show up here.</p>}
         <ul>
           {allTags.map(([t, n]) => (
@@ -94,11 +115,26 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
             ) : (
               <ol className="spines">
                 {shelf.map((s) => (
-                  <li key={s.id}>
+                  <li key={s.id} className="spine-row">
                     <a href={`#/s/${s.id}`} className={`spine spine-${s.type}`}>
                       <span className="spine-title">{s.title}</span>
                       <span className="spine-by">{byline(s) || s.details?.publication || s.details?.podcast || ''}</span>
                     </a>
+                    <div className="spine-export">
+                      <button
+                        type="button"
+                        className="spine-export-btn"
+                        title="Export PDF"
+                        onClick={(e) => { e.preventDefault(); setOpenSpineMenu(openSpineMenu === s.id ? null : s.id); }}
+                      >↓</button>
+                      {openSpineMenu === s.id && (
+                        <div className="spine-export-menu">
+                          <button type="button" onClick={() => handleSpineExport(s, 'full')}>Notes &amp; Quotes</button>
+                          <button type="button" onClick={() => handleSpineExport(s, 'notes')}>Notes only</button>
+                          <button type="button" onClick={() => handleSpineExport(s, 'quotes')}>Quotes only</button>
+                        </div>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -134,12 +170,19 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
                 <h3>Quotes</h3>
                 {results.quotes.map((q) => {
                   const s = results.byId[q.source_id];
+                  const c = citations(s, q.locator);
                   return (
-                    <a key={q.id} href={`#/s/${s.id}/q/${q.id}`} className="result-quote">
-                      <blockquote><span className="marked"><Highlight text={q.text} term={results.text} /></span></blockquote>
-                      <span className="result-meta">{s.title}{q.locator ? `, ${q.locator}` : ''}</span>
-                      <TagChips tags={q.tags} active={results.tags} />
-                    </a>
+                    <div key={q.id} className="result-quote">
+                      <a href={`#/s/${s.id}/q/${q.id}`} className="result-quote-body">
+                        <blockquote><span className="marked"><Highlight text={q.text} term={results.text} /></span></blockquote>
+                        <span className="result-meta">{s.title}{q.locator ? `, ${q.locator}` : ''}</span>
+                        <TagChips tags={q.tags} active={results.tags} />
+                      </a>
+                      <div className="result-cite-actions">
+                        <CopyButton segs={c.note} label="Footnote" />
+                        <CopyButton segs={c.short} label="Short" />
+                      </div>
+                    </div>
                   );
                 })}
               </section>
