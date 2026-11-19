@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { citations, parseAuthors } from './citations.js';
 import { parseQuery, useData } from './store.jsx';
 import { CopyButton, TagChips, TYPE_LABEL } from './ui.jsx';
@@ -33,6 +34,108 @@ function excerpt(body, term, size = 220) {
 }
 
 const byline = (s) => parseAuthors(s.authors).map((a) => [a.first, a.last].filter(Boolean).join(' ')).join(', ');
+
+// ---- Bookshelf gallery ----
+
+function useBookCover(source) {
+  const [coverUrl, setCoverUrl] = useState(null);
+  useEffect(() => {
+    if (source.type !== 'book') return;
+    const lastName = source.authors?.split(';')[0]?.split(',')[0]?.trim() || '';
+    const params = new URLSearchParams({ title: source.title, limit: 1, fields: 'cover_i' });
+    if (lastName) params.set('author', lastName);
+    fetch(`https://openlibrary.org/search.json?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const id = d.docs?.[0]?.cover_i;
+        if (id) setCoverUrl(`https://covers.openlibrary.org/b/id/${id}-M.jpg`);
+      })
+      .catch(() => {});
+  }, [source.id]); // eslint-disable-line
+  return coverUrl;
+}
+
+function BookCover({ source, openMenu, setOpenMenu, onExport }) {
+  const coverUrl = useBookCover(source);
+  const btnRef = useRef(null);
+  const [menuRect, setMenuRect] = useState(null);
+  const isOpen = openMenu === source.id;
+  // Vary width slightly per title for a realistic shelf look (88–126px)
+  const w = 88 + ((source.title.charCodeAt(0) * 7 + source.title.length * 11) % 38);
+
+  const toggleExport = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isOpen) { setOpenMenu(null); return; }
+    setMenuRect(btnRef.current.getBoundingClientRect());
+    setOpenMenu(source.id);
+  };
+
+  return (
+    <a href={`#/s/${source.id}`} className={`book-item book-${source.type}`} style={{ '--book-w': `${w}px` }}>
+      {coverUrl ? (
+        <img src={coverUrl} alt={source.title} className="book-img" draggable={false} />
+      ) : (
+        <div className="book-face">
+          <span className="book-face-title">{source.title}</span>
+          <span className="book-face-by">
+            {byline(source) || source.details?.publication || source.details?.podcast || ''}
+          </span>
+        </div>
+      )}
+      <button ref={btnRef} className="book-export-btn" title="Export PDF" onClick={toggleExport}>↓</button>
+      {isOpen && menuRect && createPortal(
+        <div
+          className="book-export-popup"
+          style={{
+            position: 'fixed',
+            bottom: window.innerHeight - menuRect.top + 6,
+            right: window.innerWidth - menuRect.right,
+            zIndex: 100,
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button onClick={(e) => { e.stopPropagation(); onExport(source, 'full'); setOpenMenu(null); }}>Notes &amp; Quotes</button>
+          <button onClick={(e) => { e.stopPropagation(); onExport(source, 'notes'); setOpenMenu(null); }}>Notes only</button>
+          <button onClick={(e) => { e.stopPropagation(); onExport(source, 'quotes'); setOpenMenu(null); }}>Quotes only</button>
+        </div>,
+        document.body,
+      )}
+    </a>
+  );
+}
+
+function Bookshelf({ sources, openMenu, setOpenMenu, onExport }) {
+  const scrollRef = useRef(null);
+
+  const scroll = (dir) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(el.clientWidth * 0.8, 320), behavior: 'smooth' });
+  };
+
+  // Close export menu on outside click
+  useEffect(() => {
+    if (!openMenu) return;
+    const handler = () => setOpenMenu(null);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openMenu]); // eslint-disable-line
+
+  return (
+    <div className="bookshelf-wrap">
+      <button className="shelf-nav shelf-nav-prev" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
+      <div className="bookshelf-scroll" ref={scrollRef}>
+        <div className="bookshelf">
+          {sources.map((s) => (
+            <BookCover key={s.id} source={s} openMenu={openMenu} setOpenMenu={setOpenMenu} onExport={onExport} />
+          ))}
+        </div>
+      </div>
+      <button className="shelf-nav shelf-nav-next" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
+    </div>
+  );
+}
 
 export default function Library({ query, setQuery, filter, setFilter, onExport }) {
   const data = useData();
@@ -113,31 +216,12 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
                 <p>Nothing here yet. Add a quote with the button above, or press Q, and create its source as you go.</p>
               </div>
             ) : (
-              <ol className="spines">
-                {shelf.map((s) => (
-                  <li key={s.id} className="spine-row">
-                    <a href={`#/s/${s.id}`} className={`spine spine-${s.type}`}>
-                      <span className="spine-title">{s.title}</span>
-                      <span className="spine-by">{byline(s) || s.details?.publication || s.details?.podcast || ''}</span>
-                    </a>
-                    <div className="spine-export">
-                      <button
-                        type="button"
-                        className="spine-export-btn"
-                        title="Export PDF"
-                        onClick={(e) => { e.preventDefault(); setOpenSpineMenu(openSpineMenu === s.id ? null : s.id); }}
-                      >↓</button>
-                      {openSpineMenu === s.id && (
-                        <div className="spine-export-menu">
-                          <button type="button" onClick={() => handleSpineExport(s, 'full')}>Notes &amp; Quotes</button>
-                          <button type="button" onClick={() => handleSpineExport(s, 'notes')}>Notes only</button>
-                          <button type="button" onClick={() => handleSpineExport(s, 'quotes')}>Quotes only</button>
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <Bookshelf
+                sources={shelf}
+                openMenu={openSpineMenu}
+                setOpenMenu={setOpenSpineMenu}
+                onExport={handleSpineExport}
+              />
             )}
           </>
         )}

@@ -208,55 +208,159 @@ textarea { resize: vertical; line-height: 1.5; }
 .tag-rail button.on .count { color: rgba(255,255,255,.75); }
 
 .shelf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.spines {
-  list-style: none; margin: 0; padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 4px;
+/* ---- Bookshelf gallery ---- */
+.bookshelf-wrap {
+  position: relative;
+  margin: 0 -16px;
 }
 
-/* Each source is a book spine — compact catalog cards */
-.spine-row { position: relative; display: flex; align-items: stretch; }
-.spine {
-  display: flex; flex-direction: column; gap: 1px;
-  flex: 1; min-width: 0;
-  padding: 6px 36px 6px 10px;
-  background: var(--sheet); border-radius: 3px var(--radius) var(--radius) 3px;
+.bookshelf-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+.bookshelf-scroll::-webkit-scrollbar { display: none; }
+
+.bookshelf {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  padding: 36px 48px 20px;
+  min-height: 260px;
+  position: relative;
+}
+
+/* Wooden shelf board */
+.bookshelf::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, #D4AF6A 0%, #B8903A 50%, #9A7020 100%);
+  box-shadow: 0 6px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.22);
+  border-radius: 1px;
+}
+
+/* Individual book */
+.book-item {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--book-w, 100px);
+  height: 174px;
   text-decoration: none;
-  border-left: 3px solid var(--cloth);
-  box-shadow: 0 1px 0 rgba(30,37,51,.06);
+  border-radius: 2px 3px 3px 2px;
+  overflow: hidden;
+  box-shadow: 2px 3px 8px rgba(0,0,0,.2), inset -4px 0 8px rgba(0,0,0,.14);
+  transition: transform .22s ease, box-shadow .22s ease;
+  transform-origin: bottom center;
+  z-index: 1;
 }
-.spine:hover { box-shadow: 0 2px 6px rgba(30,37,51,.1); }
-.spine-article { border-left-color: var(--article); }
-.spine-podcast { border-left-color: var(--podcast); }
-.spine-title { font: 500 13px/1.25 var(--serif); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.spine-by { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-item:hover {
+  transform: translateY(-13px) scale(1.05);
+  box-shadow: 5px 16px 28px rgba(0,0,0,.38), inset -4px 0 8px rgba(0,0,0,.14);
+  z-index: 10;
+}
 
-/* Per-spine export button */
-.spine-export { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; }
-.spine-export-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 100%;
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); font-size: 12px; opacity: 0;
-  transition: opacity .15s;
-  border-radius: 0 var(--radius) var(--radius) 0;
+/* Cover image */
+.book-img {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
-.spine-row:hover .spine-export-btn { opacity: 1; }
-.spine-export-btn:hover { background: rgba(30,37,51,.06); color: var(--ink); }
-.spine-export-menu {
-  position: absolute; right: 0; top: calc(100% + 2px); z-index: 40;
+
+/* Fallback cover (no image found) */
+.book-face {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 14px 10px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.book-face::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent 0px, transparent 3px,
+    rgba(255,255,255,.04) 3px, rgba(255,255,255,.04) 4px
+  );
+}
+.book-face::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(155deg, rgba(255,255,255,.18) 0%, transparent 55%);
+}
+.book-book   .book-face { background: linear-gradient(160deg, #4A8070, var(--cloth)); }
+.book-article .book-face { background: linear-gradient(160deg, #4D6E9E, var(--article)); }
+.book-podcast .book-face { background: linear-gradient(160deg, #9B6080, var(--podcast)); }
+
+.book-face-title {
+  font: 600 11px/1.35 var(--serif);
+  color: rgba(255,255,255,.95);
+  position: relative; z-index: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.book-face-by {
+  font: 400 9.5px/1.3 var(--sans);
+  color: rgba(255,255,255,.65);
+  position: relative; z-index: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Per-book export button */
+.book-export-btn {
+  position: absolute; bottom: 6px; right: 5px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.42);
+  border: none; cursor: pointer;
+  color: rgba(255,255,255,.88); font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+  z-index: 2;
+}
+.book-item:hover .book-export-btn { opacity: 1; }
+.book-export-btn:hover { background: rgba(0,0,0,.62); }
+
+/* Export popup (rendered via portal, position:fixed) */
+.book-export-popup {
   background: var(--sheet); border: 1px solid var(--rule);
-  border-radius: var(--radius); box-shadow: 0 4px 12px rgba(30,37,51,.12);
-  min-width: 140px; padding: 4px;
+  border-radius: var(--radius); box-shadow: 0 4px 14px rgba(30,37,51,.15);
+  min-width: 148px; padding: 4px;
   display: flex; flex-direction: column;
 }
-.spine-export-menu button {
+.book-export-popup button {
   background: none; border: none; cursor: pointer;
   text-align: left; padding: 6px 10px; border-radius: 3px;
   font-size: 13px; color: var(--ink); white-space: nowrap;
 }
-.spine-export-menu button:hover { background: rgba(30,37,51,.06); }
+.book-export-popup button:hover { background: rgba(30,37,51,.06); }
+
+/* Prev / Next scroll buttons */
+.shelf-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 20;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: rgba(252,252,250,.92);
+  box-shadow: 0 2px 8px rgba(30,37,51,.14);
+  color: var(--ink); font-size: 22px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.shelf-nav:hover { background: var(--sheet); }
+.shelf-nav-prev { left: 6px; }
+.shelf-nav-next { right: 6px; }
 
 /* SourceView export dropdown */
 .export-menu { position: relative; }
