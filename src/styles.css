@@ -255,13 +255,17 @@ textarea { resize: vertical; line-height: 1.5; }
   border-radius: 2px 3px 3px 2px;
   overflow: hidden;
   box-shadow: 2px 3px 8px rgba(0,0,0,.2), inset -4px 0 8px rgba(0,0,0,.14);
-  transition: transform .22s ease, box-shadow .22s ease;
+  transition: box-shadow .2s ease;
   transform-origin: bottom center;
   z-index: 1;
 }
 .book-item:hover {
-  transform: translateY(-13px) scale(1.05);
   box-shadow: 5px 16px 28px rgba(0,0,0,.38), inset -4px 0 8px rgba(0,0,0,.14);
+  z-index: 10;
+}
+.book-active {
+  box-shadow: 5px 18px 32px rgba(0,0,0,.42), inset -4px 0 8px rgba(0,0,0,.14),
+              0 0 0 2px rgba(255,255,255,.6);
   z-index: 10;
 }
 

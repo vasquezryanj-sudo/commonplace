@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { citations, parseAuthors } from './citations.js';
 import { parseQuery, useData } from './store.jsx';
 import { CopyButton, TagChips, TYPE_LABEL } from './ui.jsx';
@@ -56,24 +57,36 @@ function useBookCover(source) {
   return coverUrl;
 }
 
-function BookCover({ source, openMenu, setOpenMenu, onExport }) {
+function BookCover({ source, index, isActive, openMenu, setOpenMenu, onExport }) {
   const coverUrl = useBookCover(source);
   const btnRef = useRef(null);
   const [menuRect, setMenuRect] = useState(null);
-  const isOpen = openMenu === source.id;
-  // Vary width slightly per title for a realistic shelf look (88–126px)
+  const isMenuOpen = openMenu === source.id;
   const w = 88 + ((source.title.charCodeAt(0) * 7 + source.title.length * 11) % 38);
 
   const toggleExport = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isOpen) { setOpenMenu(null); return; }
+    if (isMenuOpen) { setOpenMenu(null); return; }
     setMenuRect(btnRef.current.getBoundingClientRect());
     setOpenMenu(source.id);
   };
 
   return (
-    <a href={`#/s/${source.id}`} className={`book-item book-${source.type}`} style={{ '--book-w': `${w}px` }}>
+    <motion.a
+      href={`#/s/${source.id}`}
+      className={`book-item book-${source.type}${isActive ? ' book-active' : ''}`}
+      style={{ '--book-w': `${w}px` }}
+      initial={{ opacity: 0, y: 28 }}
+      animate={{
+        opacity: 1,
+        y: isActive ? -16 : 0,
+        scale: isActive ? 1.06 : 1,
+      }}
+      whileHover={{ y: isActive ? -18 : -13, scale: isActive ? 1.07 : 1.05 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 360, damping: 22, delay: index * 0.04 }}
+    >
       {coverUrl ? (
         <img src={coverUrl} alt={source.title} className="book-img" draggable={false} />
       ) : (
@@ -85,7 +98,7 @@ function BookCover({ source, openMenu, setOpenMenu, onExport }) {
         </div>
       )}
       <button ref={btnRef} className="book-export-btn" title="Export PDF" onClick={toggleExport}>↓</button>
-      {isOpen && menuRect && createPortal(
+      {isMenuOpen && menuRect && createPortal(
         <div
           className="book-export-popup"
           style={{
@@ -102,11 +115,11 @@ function BookCover({ source, openMenu, setOpenMenu, onExport }) {
         </div>,
         document.body,
       )}
-    </a>
+    </motion.a>
   );
 }
 
-function Bookshelf({ sources, openMenu, setOpenMenu, onExport }) {
+function Bookshelf({ sources, activeSourceId, openMenu, setOpenMenu, onExport }) {
   const scrollRef = useRef(null);
 
   const scroll = (dir) => {
@@ -115,7 +128,6 @@ function Bookshelf({ sources, openMenu, setOpenMenu, onExport }) {
     el.scrollBy({ left: dir * Math.max(el.clientWidth * 0.8, 320), behavior: 'smooth' });
   };
 
-  // Close export menu on outside click
   useEffect(() => {
     if (!openMenu) return;
     const handler = () => setOpenMenu(null);
@@ -128,8 +140,16 @@ function Bookshelf({ sources, openMenu, setOpenMenu, onExport }) {
       <button className="shelf-nav shelf-nav-prev" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
       <div className="bookshelf-scroll" ref={scrollRef}>
         <div className="bookshelf">
-          {sources.map((s) => (
-            <BookCover key={s.id} source={s} openMenu={openMenu} setOpenMenu={setOpenMenu} onExport={onExport} />
+          {sources.map((s, i) => (
+            <BookCover
+              key={s.id}
+              source={s}
+              index={i}
+              isActive={s.id === activeSourceId}
+              openMenu={openMenu}
+              setOpenMenu={setOpenMenu}
+              onExport={onExport}
+            />
           ))}
         </div>
       </div>
@@ -228,6 +248,7 @@ export default function Library({ query, setQuery, filter, setFilter, onExport, 
             ) : (
               <Bookshelf
                 sources={shelf}
+                activeSourceId={activeSourceId}
                 openMenu={openSpineMenu}
                 setOpenMenu={setOpenSpineMenu}
                 onExport={handleSpineExport}
