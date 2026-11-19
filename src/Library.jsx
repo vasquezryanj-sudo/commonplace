@@ -184,7 +184,7 @@ export default function Library({ query, setQuery, filter, setFilter, onExport, 
 
   return (
     <div className="library">
-      <aside className="tag-rail" style={activeSourceId ? { display: 'none' } : undefined}>
+      <aside className="tag-rail">
         <div className="tag-rail-head">
           <h2>Tags</h2>
           {allTags.length > 0 && (
