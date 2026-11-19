@@ -215,7 +215,7 @@ textarea { resize: vertical; line-height: 1.5; }
 /* ---- Bookshelf gallery ---- */
 .bookshelf-wrap {
   position: relative;
-  margin: 0 -16px;
+  margin: 0 -24px;
 }
 
 .bookshelf-scroll {
@@ -228,9 +228,10 @@ textarea { resize: vertical; line-height: 1.5; }
 .bookshelf {
   display: flex;
   align-items: flex-end;
-  gap: 5px;
-  padding: 36px 48px 20px;
-  min-height: 260px;
+  gap: 8px;
+  padding: 48px 56px 28px;
+  min-height: 320px;
+  min-width: 100%;
   position: relative;
 }
 
@@ -239,9 +240,9 @@ textarea { resize: vertical; line-height: 1.5; }
   content: '';
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 20px;
-  background: linear-gradient(to bottom, #D4AF6A 0%, #B8903A 50%, #9A7020 100%);
-  box-shadow: 0 6px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.22);
+  height: 28px;
+  background: linear-gradient(to bottom, #C8A050 0%, #A47828 50%, #8A6010 100%);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.2);
   border-radius: 1px;
 }
 
@@ -249,23 +250,33 @@ textarea { resize: vertical; line-height: 1.5; }
 .book-item {
   position: relative;
   flex-shrink: 0;
-  width: var(--book-w, 100px);
-  height: 174px;
+  width: var(--book-w, 110px);
+  height: 220px;
   text-decoration: none;
-  border-radius: 2px 3px 3px 2px;
+  border-radius: 2px 4px 4px 2px;
   overflow: hidden;
-  box-shadow: 2px 3px 8px rgba(0,0,0,.2), inset -4px 0 8px rgba(0,0,0,.14);
+  box-shadow: 3px 6px 16px rgba(0,0,0,.3), inset -4px 0 10px rgba(0,0,0,.18);
   transition: box-shadow .2s ease;
   transform-origin: bottom center;
   z-index: 1;
 }
+/* Left spine shadow strip */
+.book-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 16px;
+  background: linear-gradient(to right, rgba(0,0,0,.42) 0%, rgba(0,0,0,.12) 60%, transparent 100%);
+  z-index: 3;
+  pointer-events: none;
+}
 .book-item:hover {
-  box-shadow: 5px 16px 28px rgba(0,0,0,.38), inset -4px 0 8px rgba(0,0,0,.14);
+  box-shadow: 6px 20px 36px rgba(0,0,0,.44), inset -4px 0 10px rgba(0,0,0,.18);
   z-index: 10;
 }
 .book-active {
-  box-shadow: 5px 18px 32px rgba(0,0,0,.42), inset -4px 0 8px rgba(0,0,0,.14),
-              0 0 0 2px rgba(255,255,255,.6);
+  box-shadow: 8px 24px 40px rgba(0,0,0,.52), inset -4px 0 10px rgba(0,0,0,.18),
+              0 0 0 2px rgba(255,255,255,.65);
   z-index: 10;
 }
 
@@ -281,63 +292,72 @@ textarea { resize: vertical; line-height: 1.5; }
 .book-face {
   width: 100%; height: 100%;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 8px; padding: 14px 10px;
+  padding: 18px 12px 14px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(165deg, var(--book-shade, #1E3050), var(--book-bg, #34507E));
 }
+/* Fine linen texture */
 .book-face::before {
   content: '';
   position: absolute; inset: 0;
   background: repeating-linear-gradient(
-    0deg, transparent 0px, transparent 3px,
-    rgba(255,255,255,.04) 3px, rgba(255,255,255,.04) 4px
+    90deg, transparent 0px, transparent 2px,
+    rgba(255,255,255,.025) 2px, rgba(255,255,255,.025) 3px
+  ), repeating-linear-gradient(
+    0deg, transparent 0px, transparent 2px,
+    rgba(255,255,255,.018) 2px, rgba(255,255,255,.018) 3px
   );
 }
+/* Gloss sheen */
 .book-face::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(155deg, rgba(255,255,255,.18) 0%, transparent 55%);
+  background: linear-gradient(145deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.04) 40%, transparent 65%);
 }
-.book-book   .book-face { background: linear-gradient(160deg, #4A8070, var(--cloth)); }
-.book-article .book-face { background: linear-gradient(160deg, #4D6E9E, var(--article)); }
-.book-podcast .book-face { background: linear-gradient(160deg, #9B6080, var(--podcast)); }
 
 .book-face-title {
-  font: 600 11px/1.35 var(--serif);
-  color: rgba(255,255,255,.95);
+  font: 700 11.5px/1.4 var(--serif);
+  color: rgba(255,255,255,.97);
   position: relative; z-index: 1;
+  flex: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 7;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  letter-spacing: .01em;
 }
 .book-face-by {
-  font: 400 9.5px/1.3 var(--sans);
-  color: rgba(255,255,255,.65);
+  font: 400 9px/1.3 var(--sans);
+  color: rgba(255,255,255,.58);
   position: relative; z-index: 1;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.15);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  letter-spacing: .02em;
+  text-transform: uppercase;
 }
 
 /* Per-book export button */
 .book-export-btn {
-  position: absolute; bottom: 6px; right: 5px;
-  width: 22px; height: 22px;
+  position: absolute; bottom: 7px; right: 6px;
+  width: 24px; height: 24px;
   border-radius: 50%;
-  background: rgba(0,0,0,.42);
+  background: rgba(0,0,0,.45);
   border: none; cursor: pointer;
-  color: rgba(255,255,255,.88); font-size: 11px;
+  color: rgba(255,255,255,.9); font-size: 12px;
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
   transition: opacity .15s, background .15s;
-  z-index: 2;
+  z-index: 4;
 }
 .book-item:hover .book-export-btn { opacity: 1; }
-.book-export-btn:hover { background: rgba(0,0,0,.62); }
+.book-export-btn:hover { background: rgba(0,0,0,.65); }
 
 /* Export popup (rendered via portal, position:fixed) */
 .book-export-popup {
@@ -357,18 +377,19 @@ textarea { resize: vertical; line-height: 1.5; }
 .shelf-nav {
   position: absolute; top: 50%; transform: translateY(-50%);
   z-index: 20;
-  width: 34px; height: 34px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   border: 1px solid var(--rule);
-  background: rgba(252,252,250,.92);
-  box-shadow: 0 2px 8px rgba(30,37,51,.14);
+  background: rgba(252,252,250,.94);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(30,37,51,.18);
   color: var(--ink); font-size: 22px; line-height: 1;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .12s;
+  transition: background .12s, box-shadow .12s;
 }
-.shelf-nav:hover { background: var(--sheet); }
-.shelf-nav-prev { left: 6px; }
-.shelf-nav-next { right: 6px; }
+.shelf-nav:hover { background: var(--sheet); box-shadow: 0 3px 14px rgba(30,37,51,.24); }
+.shelf-nav-prev { left: 8px; }
+.shelf-nav-next { right: 8px; }
 
 /* SourceView export dropdown */
 .export-menu { position: relative; }

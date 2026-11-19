@@ -6,6 +6,26 @@ import { parseQuery, useData } from './store.jsx';
 import { CopyButton, TagChips, TYPE_LABEL } from './ui.jsx';
 import SourceView from './SourceView.jsx';
 
+const BOOK_PALETTE = [
+  ['#2F5D50', '#1A3D33'],
+  ['#34507E', '#1C3056'],
+  ['#7B4760', '#4D2A3A'],
+  ['#5A3E28', '#3A2518'],
+  ['#2D5A6B', '#183A45'],
+  ['#6B3A2D', '#421E14'],
+  ['#3A4A6B', '#1E3050'],
+  ['#4A6B3A', '#2A4520'],
+  ['#6B4A2D', '#421E14'],
+  ['#1E4D6B', '#0E2D45'],
+  ['#5E3A6B', '#381F47'],
+  ['#6B5230', '#453215'],
+];
+function bookColor(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return BOOK_PALETTE[h % BOOK_PALETTE.length];
+}
+
 export function runSearch({ sources, quotes, notes }, query, tagMode = 'and') {
   const { tags, text } = parseQuery(query);
   const byId = Object.fromEntries(sources.map((s) => [s.id, s]));
@@ -62,7 +82,8 @@ function BookCover({ source, index, isActive, openMenu, setOpenMenu, onExport })
   const btnRef = useRef(null);
   const [menuRect, setMenuRect] = useState(null);
   const isMenuOpen = openMenu === source.id;
-  const w = 88 + ((source.title.charCodeAt(0) * 7 + source.title.length * 11) % 38);
+  const w = 100 + ((source.title.charCodeAt(0) * 7 + source.title.length * 11) % 50);
+  const [bg, shade] = bookColor(source.id);
 
   const toggleExport = (e) => {
     e.preventDefault();
@@ -76,16 +97,17 @@ function BookCover({ source, index, isActive, openMenu, setOpenMenu, onExport })
     <motion.a
       href={`#/s/${source.id}`}
       className={`book-item book-${source.type}${isActive ? ' book-active' : ''}`}
-      style={{ '--book-w': `${w}px` }}
-      initial={{ opacity: 0, y: 28 }}
+      style={{ '--book-w': `${w}px`, '--book-bg': bg, '--book-shade': shade, perspective: 700 }}
+      initial={{ opacity: 0, y: 32, rotateY: -18 }}
       animate={{
         opacity: 1,
-        y: isActive ? -16 : 0,
+        y: isActive ? -22 : 0,
         scale: isActive ? 1.06 : 1,
+        rotateY: isActive ? 0 : -7,
       }}
-      whileHover={{ y: isActive ? -18 : -13, scale: isActive ? 1.07 : 1.05 }}
-      whileTap={{ scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 360, damping: 22, delay: index * 0.04 }}
+      whileHover={{ y: isActive ? -24 : -16, scale: isActive ? 1.07 : 1.04, rotateY: isActive ? 0 : -2 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 24, delay: index * 0.04 }}
     >
       {coverUrl ? (
         <img src={coverUrl} alt={source.title} className="book-img" draggable={false} />
