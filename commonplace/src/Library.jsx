@@ -185,6 +185,7 @@ export default function Library({ query, setQuery, filter, setFilter, onExport, 
   const { sources, quotes, notes, terms, allTags, loading } = data;
   const [openSpineMenu, setOpenSpineMenu] = useState(null);
   const [tagMode, setTagMode] = useState('and');
+  const [railCollapsed, setRailCollapsed] = useState(false);
   const sourceRef = useRef(null);
 
   useEffect(() => {
@@ -225,28 +226,49 @@ export default function Library({ query, setQuery, filter, setFilter, onExport, 
   const activeTags = results?.tags || [];
 
   return (
-    <div className="library">
+    <div className={`library${railCollapsed ? ' rail-collapsed' : ''}`}>
       <aside className="tag-rail">
-        <div className="tag-rail-head">
-          <h2>Tags</h2>
-          {allTags.length > 0 && (
-            <div className="tag-mode-toggle" role="group" aria-label="Tag filter mode">
-              <button type="button" className={tagMode === 'and' ? 'on' : ''} onClick={() => setTagMode('and')} title="Show quotes that have all selected tags">All</button>
-              <button type="button" className={tagMode === 'or' ? 'on' : ''} onClick={() => setTagMode('or')} title="Show quotes that have any selected tag">Any</button>
-            </div>
+        <button
+          type="button"
+          className="rail-toggle"
+          onClick={() => setRailCollapsed((v) => !v)}
+          title={railCollapsed ? 'Expand tags' : 'Collapse tags'}
+          aria-label={railCollapsed ? 'Expand tags' : 'Collapse tags'}
+        >
+          {railCollapsed ? '›' : '‹'}
+        </button>
+        <AnimatePresence initial={false}>
+          {!railCollapsed && (
+            <motion.div
+              key="rail-content"
+              initial={{ opacity: 0, width: 220 }}
+              animate={{ opacity: 1, width: 220 }}
+              exit={{ opacity: 0, width: 220 }}
+              transition={{ duration: 0.18 }}
+            >
+              <div className="tag-rail-head">
+                <h2>Tags</h2>
+                {allTags.length > 0 && (
+                  <div className="tag-mode-toggle" role="group" aria-label="Tag filter mode">
+                    <button type="button" className={tagMode === 'and' ? 'on' : ''} onClick={() => setTagMode('and')} title="Show quotes that have all selected tags">All</button>
+                    <button type="button" className={tagMode === 'or' ? 'on' : ''} onClick={() => setTagMode('or')} title="Show quotes that have any selected tag">Any</button>
+                  </div>
+                )}
+              </div>
+              {allTags.length === 0 && <p className="hint">Tags you add to quotes show up here.</p>}
+              <ul>
+                {allTags.map(([t, n]) => (
+                  <li key={t}>
+                    <button type="button" className={activeTags.includes(t) || activeTags.includes(t.replace(/\s+/g, '-')) ? 'on' : ''}
+                      onClick={() => toggleTag(t)}>
+                      <span>#{t}</span><span className="count">{n}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
           )}
-        </div>
-        {allTags.length === 0 && <p className="hint">Tags you add to quotes show up here.</p>}
-        <ul>
-          {allTags.map(([t, n]) => (
-            <li key={t}>
-              <button type="button" className={activeTags.includes(t) || activeTags.includes(t.replace(/\s+/g, '-')) ? 'on' : ''}
-                onClick={() => toggleTag(t)}>
-                <span>#{t}</span><span className="count">{n}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        </AnimatePresence>
       </aside>
 
       <section className="shelf">

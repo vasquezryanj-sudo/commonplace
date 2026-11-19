@@ -186,11 +186,33 @@ textarea { resize: vertical; line-height: 1.5; }
   display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px;
   max-width: 1180px; margin: 0 auto; padding: 32px;
   grid-template-areas: "rail shelf" "rail source";
+  transition: grid-template-columns .22s ease;
 }
-.tag-rail     { grid-area: rail; }
+.library.rail-collapsed {
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 16px;
+}
+.tag-rail     { grid-area: rail; position: relative; }
 .shelf        { grid-area: shelf; }
 .source-below { grid-area: source; padding-top: 16px; border-top: 1px solid var(--rule); }
-.tag-rail-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
+
+/* Collapse toggle button */
+.rail-toggle {
+  position: absolute; top: 0; right: -6px;
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  box-shadow: 0 1px 4px rgba(30,37,51,.12);
+  color: var(--muted); font-size: 14px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+  transition: background .12s, color .12s;
+}
+.rail-toggle:hover { background: var(--desk); color: var(--ink); }
+.library.rail-collapsed .rail-toggle { right: auto; left: 4px; }
+
+.tag-rail-head { display: flex; align-items: center; justify-content: space-between; margin: 32px 0 10px; }
 .tag-rail h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0; }
 .tag-mode-toggle { display: flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
 .tag-mode-toggle button {
