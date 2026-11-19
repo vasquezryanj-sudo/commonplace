@@ -128,7 +128,7 @@ function TermComposer({ sourceId, onClose }) {
 }
 
 function TermCard({ term: t }) {
-  const { saveTerm, deleteTerm } = useData();
+  const { saveTerm, deleteTerm, isOwner } = useData();
   const [editing, setEditing] = useState(false);
   const [term, setTerm] = useState(t.term);
   const [definition, setDefinition] = useState(t.definition);
@@ -159,17 +159,17 @@ function TermCard({ term: t }) {
       <div className="card-actions">
         <span className="hint">{shortDate(t.created_at)}</span>
         <span className="spacer" />
-        <button type="button" className="btn-ghost reveal" onClick={() => setEditing(true)}>Edit</button>
-        <button type="button" className="btn-ghost btn-quiet-danger reveal" onClick={() => {
+        {isOwner && <button type="button" className="btn-ghost reveal" onClick={() => setEditing(true)}>Edit</button>}
+        {isOwner && <button type="button" className="btn-ghost btn-quiet-danger reveal" onClick={() => {
           if (window.confirm('Delete this term?')) deleteTerm(t.id);
-        }}>Delete</button>
+        }}>Delete</button>}
       </div>
     </li>
   );
 }
 
 function QuoteCard({ quote, source, activeTags, onTag, focused }) {
-  const { saveQuote, deleteQuote } = useData();
+  const { saveQuote, deleteQuote, isOwner } = useData();
   const [editing, setEditing] = useState(false);
   const cites = citations(source, quote.locator);
 
@@ -196,17 +196,17 @@ function QuoteCard({ quote, source, activeTags, onTag, focused }) {
         <CopyButton segs={cites.note} label="Copy footnote" />
         <CopyButton segs={cites.short} label="Copy short footnote" />
         <span className="spacer" />
-        <button type="button" className="btn-ghost reveal" onClick={() => setEditing(true)}>Edit</button>
-        <button type="button" className="btn-ghost btn-quiet-danger reveal" onClick={() => {
+        {isOwner && <button type="button" className="btn-ghost reveal" onClick={() => setEditing(true)}>Edit</button>}
+        {isOwner && <button type="button" className="btn-ghost btn-quiet-danger reveal" onClick={() => {
           if (window.confirm('Delete this quote?')) deleteQuote(quote.id);
-        }}>Delete</button>
+        }}>Delete</button>}
       </div>
     </li>
   );
 }
 
 function NoteCard({ note }) {
-  const { saveNote, deleteNote } = useData();
+  const { saveNote, deleteNote, isOwner } = useData();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(note.body);
   const save = async () => { if (body.trim()) { await saveNote({ source_id: note.source_id, body }, note.id); setEditing(false); } };
@@ -235,10 +235,10 @@ function NoteCard({ note }) {
       <div className="card-actions">
         <span className="hint">{shortDate(note.created_at)}</span>
         <span className="spacer" />
-        <button type="button" className="btn-ghost reveal" onClick={() => setEditing(true)}>Edit</button>
-        <button type="button" className="btn-ghost btn-quiet-danger reveal" onClick={() => {
+        {isOwner && <button type="button" className="btn-ghost reveal" onClick={() => setEditing(true)}>Edit</button>}
+        {isOwner && <button type="button" className="btn-ghost btn-quiet-danger reveal" onClick={() => {
           if (window.confirm('Delete this note?')) deleteNote(note.id);
-        }}>Delete</button>
+        }}>Delete</button>}
       </div>
     </li>
   );
@@ -274,7 +274,7 @@ function NoteComposer({ sourceId }) {
 }
 
 export default function SourceView({ id, focusQuoteId, onExport }) {
-  const { sources, quotes, notes, terms, saveQuote, loading } = useData();
+  const { sources, quotes, notes, terms, saveQuote, loading, isOwner } = useData();
   const source = sources.find((s) => s.id === id);
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -313,7 +313,7 @@ export default function SourceView({ id, focusQuoteId, onExport }) {
           <p className="source-by">{[names.join(', '), [where, when].filter(Boolean).join(', ')].filter(Boolean).join(' / ')}</p>
         </div>
         <div className="source-actions">
-          <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>Edit source</button>
+          {isOwner && <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>Edit source</button>}
           <div className="export-menu">
             <button type="button" className="btn-ghost" onClick={() => setExportOpen((o) => !o)}>Export PDF</button>
             {exportOpen && (
@@ -343,7 +343,7 @@ export default function SourceView({ id, focusQuoteId, onExport }) {
             <h2>Notes</h2>
             <span className="hint">{myNotes.length}</span>
           </div>
-          <NoteComposer sourceId={source.id} />
+          {isOwner && <NoteComposer sourceId={source.id} />}
           <ul className="note-list">
             {myNotes.map((n) => <NoteCard key={n.id} note={n} />)}
           </ul>
@@ -354,7 +354,7 @@ export default function SourceView({ id, focusQuoteId, onExport }) {
             <h2>Terms</h2>
             <span className="hint">{myTerms.length}</span>
             <span className="spacer" />
-            {!addingTerm && <button type="button" className="btn" onClick={() => setAddingTerm(true)}>Add term</button>}
+            {isOwner && !addingTerm && <button type="button" className="btn" onClick={() => setAddingTerm(true)}>Add term</button>}
           </div>
           {myTerms.length > 0 && (
             <input className="term-search" placeholder="Search terms…" value={termSearch}
@@ -373,7 +373,7 @@ export default function SourceView({ id, focusQuoteId, onExport }) {
             <h2>Quotes</h2>
             <span className="hint">{shown.length}{tagFilter.length ? ` of ${myQuotes.length}` : ''}</span>
             <span className="spacer" />
-            {!adding && <button type="button" className="btn" onClick={() => setAdding(true)}>Add quote</button>}
+            {isOwner && !adding && <button type="button" className="btn" onClick={() => setAdding(true)}>Add quote</button>}
           </div>
           {tagsHere.length > 0 && (
             <div className="tag-filter">

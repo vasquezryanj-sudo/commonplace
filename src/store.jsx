@@ -6,7 +6,7 @@ export const useData = () => useContext(DataContext);
 
 const byNewest = (a, b) => (b.created_at || '').localeCompare(a.created_at || '');
 
-export function DataProvider({ children, onError }) {
+export function DataProvider({ children, onError, isOwner = false }) {
   const [sources, setSources] = useState([]);
   const [quotes, setQuotes] = useState([]);
   const [notes, setNotes] = useState([]);
@@ -120,7 +120,7 @@ export function DataProvider({ children, onError }) {
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [quotes]);
 
-  const value = { sources, quotes, notes, terms, loading, allTags, ...api };
+  const value = { sources, quotes, notes, terms, loading, allTags, isOwner, ...api };
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
