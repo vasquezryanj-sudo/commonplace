@@ -218,6 +218,19 @@ textarea { resize: vertical; line-height: 1.5; }
   margin: 0 -24px;
 }
 
+/* Shelf board lives on the wrap so it spans full width regardless of scroll */
+.bookshelf-wrap::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 28px;
+  background: linear-gradient(to bottom, #C8A050 0%, #A47828 50%, #8A6010 100%);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.2);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .bookshelf-scroll {
   overflow-x: auto;
   scrollbar-width: none;
@@ -233,17 +246,6 @@ textarea { resize: vertical; line-height: 1.5; }
   min-height: 320px;
   min-width: 100%;
   position: relative;
-}
-
-/* Wooden shelf board */
-.bookshelf::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 28px;
-  background: linear-gradient(to bottom, #C8A050 0%, #A47828 50%, #8A6010 100%);
-  box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.2);
-  border-radius: 1px;
 }
 
 /* Individual book */
