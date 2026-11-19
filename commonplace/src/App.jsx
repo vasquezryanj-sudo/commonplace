@@ -7,6 +7,7 @@ import SourceForm from './SourceForm.jsx';
 import SourceView from './SourceView.jsx';
 import { DataProvider } from './store.jsx';
 import { configured, supabase } from './supabase.js';
+import { Modal } from './ui.jsx';
 
 function useRoute() {
   const read = () => {
@@ -22,37 +23,42 @@ function useRoute() {
   return route;
 }
 
-function Login() {
+function LoginModal({ onClose }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <main className="login">
-      <form onSubmit={async (e) => {
+    <Modal title="Sign in" onClose={onClose}>
+      <form className="form" onSubmit={async (e) => {
         e.preventDefault(); setBusy(true); setError('');
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) setError(err.message === 'Invalid login credentials' ? 'That email and password don’t match.' : err.message);
+        if (err) setError('That email and password don\'t match.');
+        else onClose();
         setBusy(false);
       }}>
-        <h1 className="wordmark">Commonplace</h1>
         <label className="field"><span>Email</span>
-          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus /></label>
+          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
         <label className="field"><span>Password</span>
           <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="btn" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        <div className="form-actions">
+          <span className="spacer" />
+          <button className="btn" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        </div>
       </form>
-    </main>
+    </Modal>
   );
 }
 
-function Shell() {
+function Shell({ session }) {
+  const isOwner = Boolean(session);
   const route = useRoute();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [quick, setQuick] = useState(false);
   const [newSource, setNewSource] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [toast, setToast] = useState('');
   const [printJob, setPrintJob] = useState(null);
   const searchRef = useRef(null);
@@ -69,7 +75,7 @@ function Shell() {
     const onKey = (e) => {
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
       if (typing || e.metaKey || e.ctrlKey || e.altKey || quick || newSource) return;
-      if (e.key === 'q' || e.key === 'Q') { e.preventDefault(); setQuick(true); }
+      if (isOwner && (e.key === 'q' || e.key === 'Q')) { e.preventDefault(); setQuick(true); }
       if (e.key === '/') { e.preventDefault(); searchRef.current?.focus(); }
     };
     window.addEventListener('keydown', onKey);
@@ -85,7 +91,7 @@ function Shell() {
   }, [printJob]);
 
   return (
-    <DataProvider onError={notify}>
+    <DataProvider onError={notify} isOwner={isOwner}>
       <div className="app">
         <header className="topbar">
           <a href="#/" className="wordmark" onClick={() => setQuery('')}>Commonplace</a>
@@ -96,9 +102,11 @@ function Shell() {
               onKeyDown={(e) => { if (e.key === 'Escape') { setQuery(''); e.target.blur(); } }} />
             {!query && <kbd>/</kbd>}
           </div>
-          <button type="button" className="btn-ghost" onClick={() => setNewSource(true)}>New source</button>
-          <button type="button" className="btn" onClick={() => setQuick(true)}>Add quote <kbd>Q</kbd></button>
-          <button type="button" className="btn-ghost signout" onClick={() => supabase.auth.signOut()}>Sign out</button>
+          {isOwner && <button type="button" className="btn-ghost" onClick={() => setNewSource(true)}>New source</button>}
+          {isOwner && <button type="button" className="btn" onClick={() => setQuick(true)}>Add quote <kbd>Q</kbd></button>}
+          {isOwner
+            ? <button type="button" className="btn-ghost signout" onClick={() => supabase.auth.signOut()}>Sign out</button>
+            : <button type="button" className="btn-ghost signout" onClick={() => setShowLogin(true)}>Sign in</button>}
         </header>
 
         <main>
@@ -107,10 +115,11 @@ function Shell() {
             : <Library query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} onExport={setPrintJob} />}
         </main>
 
-        {quick && <QuickQuote onClose={() => setQuick(false)} notify={notify}
+        {isOwner && quick && <QuickQuote onClose={() => setQuick(false)} notify={notify}
           presetSourceId={route.view === 'source' ? route.id : null} />}
-        {newSource && <SourceForm onClose={() => setNewSource(false)}
+        {isOwner && newSource && <SourceForm onClose={() => setNewSource(false)}
           onSaved={(s) => { window.location.hash = `#/s/${s.id}`; }} />}
+        {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
         {toast && <div className="toast" role="status">{toast}</div>}
       </div>
       {createPortal(<PrintView job={printJob} />, document.getElementById('print-root'))}
@@ -137,6 +146,5 @@ export default function App() {
     );
   }
   if (session === undefined) return null;
-  if (!session) return <Login />;
-  return <Shell key={session.user.id} />;
+  return <Shell key={session?.user?.id || 'anon'} session={session} />;
 }
