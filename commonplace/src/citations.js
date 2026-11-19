@@ -110,7 +110,7 @@ function book(src, loc) {
     T(loc ? `, ${loc}` : ''),
   ]);
   const bib = finish([
-    T(a.length ? `${bibAuthors(a)}. ` : ''),
+    T(a.length ? `${bibAuthors(a).replace(/\.$/, '')}. ` : ''),
     I(title),
     T('. '),
     T(ed ? `${ed[0].toUpperCase()}${ed.slice(1)} ` : ''),
@@ -142,7 +142,7 @@ function article(src, loc) {
       T(link ? `, ${link}` : ''),
     ]);
     bib = finish([
-      T(a.length ? `${bibAuthors(a)}. ` : ''),
+      T(a.length ? `${bibAuthors(a).replace(/\.$/, '')}. ` : ''),
       Q(title, '.'),
       T(' '),
       I(d.publication || ''),
@@ -162,7 +162,7 @@ function article(src, loc) {
       T(link ? `, ${link}` : ''),
     ]);
     bib = finish([
-      T(a.length ? `${bibAuthors(a)}. ` : ''),
+      T(a.length ? `${bibAuthors(a).replace(/\.$/, '')}. ` : ''),
       Q(title, '.'),
       T(' '),
       I(d.publication || ''),
@@ -239,7 +239,10 @@ export function citations(source, locator = '') {
 
 function appendLoc(text, loc) {
   if (!loc) return text;
-  return `${text.replace(/\.\s*$/, '')}, ${loc}.`;
+  const t = text.trim();
+  // A short note ending in a quoted title: put the comma inside the quotation marks
+  if (/[.,]?”$/.test(t)) return `${t.replace(/[.,]?”$/, '')},” ${loc}.`;
+  return `${t.replace(/\.$/, '')}, ${loc}.`;
 }
 
 export const toPlain = (segs) => segs.map((s) => s.t).join('');

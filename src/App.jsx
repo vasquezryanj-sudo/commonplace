@@ -4,7 +4,6 @@ import Library from './Library.jsx';
 import PrintView from './PrintView.jsx';
 import QuickQuote from './QuickQuote.jsx';
 import SourceForm from './SourceForm.jsx';
-import SourceView from './SourceView.jsx';
 import { DataProvider } from './store.jsx';
 import { configured, supabase } from './supabase.js';
 import { Modal } from './ui.jsx';
@@ -16,7 +15,7 @@ function useRoute() {
   };
   const [route, setRoute] = useState(read);
   useEffect(() => {
-    const on = () => { setRoute(read()); window.scrollTo(0, 0); };
+    const on = () => { setRoute(read()); };
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);
@@ -110,9 +109,9 @@ function Shell({ session }) {
         </header>
 
         <main>
-          {route.view === 'source'
-            ? <SourceView key={route.id} id={route.id} focusQuoteId={route.quoteId} onExport={setPrintJob} />
-            : <Library query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} onExport={setPrintJob} />}
+          <Library query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} onExport={setPrintJob}
+            activeSourceId={route.view === 'source' ? route.id : null}
+            focusQuoteId={route.view === 'source' ? route.quoteId : null} />
         </main>
 
         {isOwner && quick && <QuickQuote onClose={() => setQuick(false)} notify={notify}

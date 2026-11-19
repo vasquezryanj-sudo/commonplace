@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { citations, parseAuthors } from './citations.js';
 import { parseQuery, useData } from './store.jsx';
 import { CopyButton, TagChips, TYPE_LABEL } from './ui.jsx';
+import SourceView from './SourceView.jsx';
 
 export function runSearch({ sources, quotes, notes }, query, tagMode = 'and') {
   const { tags, text } = parseQuery(query);
@@ -137,11 +138,20 @@ function Bookshelf({ sources, openMenu, setOpenMenu, onExport }) {
   );
 }
 
-export default function Library({ query, setQuery, filter, setFilter, onExport }) {
+export default function Library({ query, setQuery, filter, setFilter, onExport, activeSourceId, focusQuoteId }) {
   const data = useData();
   const { sources, quotes, notes, terms, allTags, loading } = data;
   const [openSpineMenu, setOpenSpineMenu] = useState(null);
   const [tagMode, setTagMode] = useState('and');
+  const sourceRef = useRef(null);
+
+  useEffect(() => {
+    if (activeSourceId && sourceRef.current) {
+      sourceRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (!activeSourceId) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeSourceId]);
 
   const handleSpineExport = (source, mode) => {
     onExport({
@@ -174,7 +184,7 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
 
   return (
     <div className="library">
-      <aside className="tag-rail">
+      <aside className="tag-rail" style={activeSourceId ? { display: 'none' } : undefined}>
         <div className="tag-rail-head">
           <h2>Tags</h2>
           {allTags.length > 0 && (
@@ -290,6 +300,12 @@ export default function Library({ query, setQuery, filter, setFilter, onExport }
           </div>
         )}
       </section>
+
+      {activeSourceId && (
+        <div ref={sourceRef} className="source-below">
+          <SourceView key={activeSourceId} id={activeSourceId} focusQuoteId={focusQuoteId} onExport={onExport} />
+        </div>
+      )}
     </div>
   );
 }

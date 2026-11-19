@@ -185,7 +185,11 @@ textarea { resize: vertical; line-height: 1.5; }
 .library {
   display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px;
   max-width: 1180px; margin: 0 auto; padding: 32px;
+  grid-template-areas: "rail shelf" "source source";
 }
+.tag-rail  { grid-area: rail; }
+.shelf     { grid-area: shelf; }
+.source-below { grid-area: source; padding-top: 8px; border-top: 1px solid var(--rule); margin-top: 8px; }
 .tag-rail-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
 .tag-rail h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0; }
 .tag-mode-toggle { display: flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
